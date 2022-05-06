@@ -1,0 +1,40 @@
+{
+    "name": "mralston/quake-sdk",
+    "description": "PHP SDK for the Quake API.",
+    "keywords": [
+        "mralston",
+        "quake",
+        "laravel"
+    ],
+    "homepage": "https://github.com/mralston/quake",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Matt Ralston",
+            "email": "matt@mralston.co.uk",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^7.4|^8.0",
+        "nesbot/carbon": "^2.0",
+        "guzzlehttp/guzzle": ">=6.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Mralston\\Quake\\": "src"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Mralston\\Quake\\Providers\\QuakeServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
