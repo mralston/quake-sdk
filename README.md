@@ -4,7 +4,7 @@ This is PHP SDK for Quake.
 The Quake platform provides WhatsApp and SMS message flow capabilities useful for recruitment, lead qualification and
 other automated two-way communication.
 
-Visit the [Quake](https://www.quake.co.uk/) for more information.
+Visit the [Quake website](https://www.quake.co.uk/) for more information.
 
 ---
 ## Installation
