@@ -9,6 +9,7 @@ use Exception;
 use Generator;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\ConnectException;
+use Mralston\Quake\Exceptions\MissingWebhookSecretException;
 use Mralston\Quake\Exceptions\NoChannelsException;
 
 class Client
@@ -26,18 +27,27 @@ class Client
 
     private ?string $companyId;
 
+    private ?string $webhookSecret;
+
     /**
      * @param string $username
      * @param string $password
      */
-    public function __construct(string $username, string $password, string $companyId, string $apiEndpoint)
-    {
+    public function __construct(
+        string $username,
+        string $password,
+        string $companyId,
+        string $apiEndpoint,
+        ?string $webhookSecret = null
+    ) {
         $this->username = $username;
         $this->password = $password;
         $this->companyId = $companyId;
 
         $this->authApiEndpoint = $apiEndpoint . '/api/oauth/token';
         $this->apiEndpoint = $apiEndpoint . '/api/v1';
+
+        $this->webhookSecret = $webhookSecret;
 
         $this->http = new HttpClient([
             'timeout' => 10
@@ -148,6 +158,61 @@ class Client
         ]);
 
         return true;
+    }
+
+    /**
+     * @return Generator
+     * @throws Exception
+     */
+    public function listContacts(): Generator
+    {
+        $this->auth();
+
+        $page = 1;
+
+        while (true) {
+            $response = $this->http->get($this->apiEndpoint . '/contacts?page=' . $page, [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $this->accessToken
+                ]
+            ]);
+
+            $json = json_decode($response->getBody()->getContents());
+
+            if (count($json->data) == 0) {
+                return;
+            }
+
+            foreach ($json->data as $contact) {
+                yield new Contact(
+                    $contact,
+                    $this
+                );
+            }
+
+            $page++;
+        }
+    }
+
+    /**
+     * @param Contact $contact
+     * @return Contact
+     * @throws Exception
+     */
+    public function showContact(Contact $contact): Contact
+    {
+        $this->auth();
+
+        $response = $this->http->get($this->apiEndpoint . '/contacts/' . $contact->id, [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $this->accessToken
+            ],
+        ]);
+
+        return new Contact(
+            json_decode($response->getBody()->getContents()),
+            $this
+        );
     }
 
     /**
@@ -365,24 +430,26 @@ class Client
         );
     }
 
-//    /**
-//     * @param Contact $contact
-//     * @return Contact
-//     * @throws Exception
-//     */
-//    public function showContact(Contact $contact): Contact
-//    {
-//        $this->auth();
-//
-//        $response = $this->http->get($this->apiEndpoint . '/contacts/' . $contact->id, [
-//            'headers' => [
-//                'Authorization' => 'Bearer ' . $this->accessToken
-//            ],
-//        ]);
-//
-//        return new Contact(
-//            json_decode($response->getBody()->getContents()),
-//            $this
-//        );
-//    }
+    public function resolveWebhookChallenge(string $crcToken, ?string $webhookSecret = null)
+    {
+        if (empty($webhookSecret)) {
+            $webhookSecret = $this->webhookSecret;
+        }
+
+        if (empty($webhookSecret)) {
+            throw new MissingWebhookSecretException();
+        }
+
+        return json_encode([
+            'response_token' => 'sha256=' .
+                base64_encode(
+                    hash_hmac(
+                        'sha256',
+                        $crcToken,
+                        $webhookSecret,
+                        true
+                    )
+                )
+        ]);
+    }
 }

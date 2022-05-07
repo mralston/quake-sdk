@@ -19,7 +19,8 @@ class QuakeServiceProvider extends ServiceProvider
                 config('quake.username'),
                 config('quake.password'),
                 config('quake.company_id'),
-                config('quake.api_endpoint')
+                config('quake.api_endpoint'),
+                config('quake.webhook_secret')
             );
         });
 

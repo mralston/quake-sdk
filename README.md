@@ -26,7 +26,8 @@ use Mralston\Quake\Flow;
 $client = new Client(
     $username,
     $password,
-    $companyId
+    $companyId,
+    $apiEndpoint
 );
 
 // Create contact
@@ -80,7 +81,31 @@ $client->createContact(
 )->createFlowInstance(
     Flow::make(['id' => $flowId])
 )->invite();
+```
 
+## Webhooks
+
+The Quake platform can send push notifications to your application via webhooks.
+In order to use webhooks, your application must be able to respond to the challenge requests sent to it.
+Such challenges include a `crc_token` which must be combined with a signing key secret in order to send a valid response.
+Signing keys can be set up on the Quake website.
+
+The `resolveWebhookChallenge()` method on the Quake client will take care of generating this response for you.
+All you need to do is provide it with the `crc_token` received and send back the response. Here is a basic example:
+
+```php
+$client = new Client(
+    $username,
+    $password,
+    $companyId,
+    $apiEndpoint,
+    $webhookSecret
+);
+
+$crcToken = $_GET['crc_token'];
+$response = $client->resolveWebhookChallenge($crcToken);
+
+echo $response;
 ```
 
 ## Laravel
@@ -99,18 +124,21 @@ return [
     'username' => env('QUAKE_USERNAME'),
     'password' => env('QUAKE_PASSWORD'),
     'company_id' => env('QUAKE_COMPANY_ID'),
-    'api_endpoint' => env('QUAKE_API_ENDPOINT')
+    'api_endpoint' => env('QUAKE_API_ENDPOINT'),
+    'webhook_secret' => env('QUAKE_WEBHOOK_SECRET')
 ];
 ```
 
 Configure the three environment variables with your username, password and company ID.
 These are UUIDs supplied by Quake.
+The API endpoint is the base URL of the Quake platform, for example `https://www.quake.co.uk`.
 
 ```dotenv
 QUAKE_USERNAME=
 QUAKE_PASSWORD=
 QUAKE_COMPANY_ID=
 QUAKE_API_ENDPOINT=
+QUAKE_WEBHOOK_SECRET=
 ```
 
 **Dependency Injection**
