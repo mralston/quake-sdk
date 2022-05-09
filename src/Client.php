@@ -441,15 +441,66 @@ class Client
         }
 
         return json_encode([
-            'response_token' => 'sha256=' .
-                base64_encode(
-                    hash_hmac(
-                        'sha256',
-                        $crcToken,
-                        $webhookSecret,
-                        true
-                    )
-                )
+            'response_token' => 'sha256=' . $this->generateHash($crcToken, $webhookSecret)
         ]);
+    }
+
+    public function validateWebhookRequest(?string $webhookSecret = null): bool
+    {
+        if (empty($webhookSecret)) {
+            $webhookSecret = $this->webhookSecret;
+        }
+
+        if (empty($webhookSecret)) {
+            throw new MissingWebhookSecretException();
+        }
+
+        // Validate timestamp
+        if (empty($_SERVER['HTTP_X_WEBHOOK_TIMESTAMP'])) {
+            return false;
+        }
+
+        $timestamp = Carbon::createFromTimestamp($_SERVER['HTTP_X_WEBHOOK_TIMESTAMP']);
+
+        if ($timestamp->isBefore(Carbon::now()->subMinute())) {
+            return false;
+        }
+
+        // Check signature version is supported (currently only v1)
+        if (($_SERVER['HTTP_X_WEBHOOK_SIGNATURE_VERSION'] ?? null) != 'v1') {
+            return false;
+        }
+
+        // Validate signature
+        if (empty($_SERVER['HTTP_X_WEBHOOK_SIGNATURE'])) {
+            return false;
+        }
+
+        $requestHash = $_SERVER['HTTP_X_WEBHOOK_SIGNATURE'];
+
+        $calculatedHash = $this->generateHash(
+            $_SERVER['HTTP_X_WEBHOOK_TIMESTAMP'] .
+            '.' .
+            file_get_contents('php://input'),
+            $webhookSecret
+        );
+
+        if ($requestHash != $calculatedHash) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function generateHash($data, $secret)
+    {
+        return base64_encode(
+            hash_hmac(
+                'sha256',
+                $data,
+                $secret,
+                true
+            )
+        );
     }
 }
