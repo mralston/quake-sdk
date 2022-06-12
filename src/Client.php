@@ -9,6 +9,8 @@ use Exception;
 use Generator;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\ConnectException;
+use libphonenumber\PhoneNumberFormat;
+use libphonenumber\PhoneNumberUtil;
 use Mralston\Quake\Exceptions\MissingWebhookSecretException;
 use Mralston\Quake\Exceptions\NoChannelsException;
 
@@ -130,7 +132,7 @@ class Client
                     "companyId" => $companyId,
                     "firstName" => $firstName,
                     "lastName" => $lastName,
-                    "telephone" => $telephone,
+                    "telephone" => $this->e164($telephone),
                     "channels" => $channels
                 ]
             ]
@@ -502,5 +504,12 @@ class Client
                 true
             )
         );
+    }
+
+    private function e164(string $telephone): string
+    {
+        $phoneUtil = PhoneNumberUtil::getInstance();
+        $numberProto = $phoneUtil->parse($telephone, 'GB');
+        return $phoneUtil->format($numberProto, PhoneNumberFormat::E164);
     }
 }
