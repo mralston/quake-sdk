@@ -114,7 +114,7 @@ echo $response;
 
 In Laravel, you can publish the config file with:
 ```bash
-php artisan vendor:publish --provider="Mralston\QuakeSdk\QuakeServiceProvider" --tag="config"
+php artisan vendor:publish --provider="Mralston\Quake\QuakeServiceProvider" --tag="config"
 ```
 
 This is the contents of the published config file:
