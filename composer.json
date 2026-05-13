@@ -19,7 +19,7 @@
         "php": "^7.4|^8.0",
         "ext-json": "*",
         "giggsey/libphonenumber-for-php": "^8.12",
-        "guzzlehttp/guzzle": ">=6.0",
+        "guzzlehttp/guzzle": "^6.0|^7.0",
         "nesbot/carbon": "^2.0"
     },
     "autoload": {
